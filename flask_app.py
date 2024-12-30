@@ -154,6 +154,15 @@ def resolve_player_info(identifier, all_players):
     return mp['elo_rating'], mp['name']
 
 
+
+@app.before_request
+def handle_elo_query_spacing():
+    if request.endpoint == 'get_elo_rating':
+        player_query = request.view_args.get('player_query')
+        if player_query:
+            modified_query = player_query.replace('_', ' ').replace('-', ' ')
+            request.view_args['player_query'] = modified_query
+
 # ----------------------------------------------------------------------------
 # /elo/<player_query>
 # ----------------------------------------------------------------------------

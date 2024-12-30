@@ -35,7 +35,7 @@ python flask_app.py
 - Match calculations use the RGX rating system
 
 The API is reachable at: johanneskdl.pythonanywhere.com
-sample request: johanneskdl.pythonanywhere.com/elo/paul siemer
+sample request: johanneskdl.pythonanywhere.com/elo/paul_siemer
 
 more soon
 

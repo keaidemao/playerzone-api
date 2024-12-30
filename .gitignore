@@ -1,3 +1,4 @@
 # ignore folders
 /older_version
 *.json
+.gitignore

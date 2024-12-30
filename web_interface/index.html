@@ -1,387 +1,757 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roundnet API Explorer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
-    <style>
-        body {
-            background-color: #111827;
-            color: #e5e7eb;
-        }
-        .autocomplete {
-            position: relative;
-        }
-        .suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            background-color: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 0.375rem;
-            z-index: 10;
-            display: none;
-        }
-        .suggestion-item {
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-        }
-        .suggestion-item:hover {
-            background-color: #374151;
-        }
-        .suggestion-item.selected {
-            background-color: #374151;
-        }
-        .api-preview {
-            font-family: monospace;
-            font-size: 0.9em;
-            opacity: 0.7;
-        }
-        .loading {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roundnet API Explorer</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+  />
+  <style>
+    body {
+      background-color: #111827;
+      color: #e5e7eb;
+    }
+    .autocomplete {
+      position: relative;
+    }
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 0.375rem;
+      z-index: 10;
+      display: none;
+    }
+    .suggestion-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .suggestion-item:hover {
+      background-color: #374151;
+    }
+    .suggestion-item.selected {
+      background-color: #374151;
+    }
+    .api-preview {
+      font-family: monospace;
+      font-size: 0.9em;
+      opacity: 0.7;
+    }
+    .loading {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold mb-4">Roundnet API Explorer</h1>
-            <div class="flex items-center gap-4">
-                <button id="loadPlayers" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
-                    <svg class="w-5 h-5 mr-2 hidden loading" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/>
-                    </svg>
-                    Load Player Data
-                </button>
-                <span id="dataStatus" class="text-gray-400">No player data loaded</span>
-            </div>
-        </header>
+  <div class="max-w-7xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mb-4">Roundnet API Explorer</h1>
+      <div class="flex items-center gap-4 mb-4">
+        <!-- Load Player Data Button -->
+        <button
+          id="loadPlayers"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+        >
+          <!-- Global spinner for loading players -->
+          <svg
+            class="w-5 h-5 mr-2 hidden loading"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"
+            />
+          </svg>
+          Load Player Data
+        </button>
+        <span id="dataStatus" class="text-gray-400">No player data loaded</span>
 
-        <div class="grid gap-8">
-            <!-- ELO Section -->
-            <section class="bg-gray-800 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4">Player ELO</h2>
-                <div class="space-y-4">
-                    <div class="autocomplete">
-                        <input type="text" id="eloPlayer" placeholder="Enter player name or ID" 
-                               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <div class="suggestions" id="eloSuggestions"></div>
-                        <div class="api-preview mt-2 text-gray-400"></div>
-                    </div>
-                    <button id="getElo" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                        Get ELO Rating
-                    </button>
-                    <pre id="eloResult" class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"></pre>
-                </div>
-            </section>
+        <!-- Toggle Mode Button (JSON / Human Readable) -->
+        <button
+          id="toggleMode"
+          class="ml-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+        >
+          Switch to Table View
+        </button>
+      </div>
+    </header>
 
-            <!-- History Section -->
-            <section class="bg-gray-800 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4">Player History</h2>
-                <div class="space-y-4">
-                    <div class="autocomplete">
-                        <input type="text" id="historyPlayer" placeholder="Enter player name or ID" 
-                               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <div class="suggestions" id="historySuggestions"></div>
-                    </div>
-                    <button id="getHistory" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                        Get History
-                    </button>
-                    <pre id="historyResult" class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"></pre>
-                </div>
-            </section>
+    <div class="grid gap-8">
+      <!-- ELO Section -->
+      <section class="bg-gray-800 p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4">Player RGX</h2>
+        <div class="space-y-4">
+          <div class="autocomplete">
+            <input
+              type="text"
+              id="eloPlayer"
+              placeholder="Enter player name or ID"
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div class="suggestions" id="eloSuggestions"></div>
+            <!-- API preview for ELO -->
+            <div class="api-preview mt-2 text-gray-400"></div>
+          </div>
+          <button
+            id="getElo"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Get RGX Info
+          </button>
 
-            <!-- Match Section -->
-            <section class="bg-gray-800 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4">Match Calculator</h2>
-                <div class="space-y-4">
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <!-- Team 1 -->
-                        <div class="space-y-4">
-                            <h3 class="font-medium">Team 1</h3>
-                            <div class="autocomplete">
-                                <input type="text" id="team1Player1" placeholder="Player 1" 
-                                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <div class="suggestions" id="team1Player1Suggestions"></div>
-                            </div>
-                            <div class="autocomplete">
-                                <input type="text" id="team1Player2" placeholder="Player 2" 
-                                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <div class="suggestions" id="team1Player2Suggestions"></div>
-                            </div>
-                        </div>
-                        <!-- Team 2 -->
-                        <div class="space-y-4">
-                            <h3 class="font-medium">Team 2</h3>
-                            <div class="autocomplete">
-                                <input type="text" id="team2Player1" placeholder="Player 1" 
-                                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <div class="suggestions" id="team2Player1Suggestions"></div>
-                            </div>
-                            <div class="autocomplete">
-                                <input type="text" id="team2Player2" placeholder="Player 2" 
-                                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <div class="suggestions" id="team2Player2Suggestions"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <button id="calculateMatch" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-                        Calculate Match
-                    </button>
-                    <pre id="matchResult" class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"></pre>
-                </div>
-            </section>
+          <!-- JSON Output -->
+          <pre
+            id="eloResultJson"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></pre>
+          <!-- Human-Readable Output -->
+          <div
+            id="eloResultReadable"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></div>
         </div>
+      </section>
+
+      <!-- History Section -->
+      <section class="bg-gray-800 p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4">Player History</h2>
+        <div class="space-y-4">
+          <div class="autocomplete">
+            <input
+              type="text"
+              id="historyPlayer"
+              placeholder="Enter player name or ID"
+              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div class="suggestions" id="historySuggestions"></div>
+            <!-- API preview for History -->
+            <div class="api-preview mt-2 text-gray-400"></div>
+          </div>
+          <button
+            id="getHistory"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <!-- Spinner for the history request -->
+            <svg
+              id="historyLoadingSpinner"
+              class="w-5 h-5 mr-2 hidden"
+              viewBox="0 0 24 24"
+            >
+              <path fill="currentColor" d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z" />
+            </svg>
+            Get History
+          </button>
+
+          <!-- JSON Output -->
+          <pre
+            id="historyResultJson"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></pre>
+          <!-- Human-Readable Output -->
+          <div
+            id="historyResultReadable"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></div>
+        </div>
+      </section>
+
+      <!-- Match Section -->
+      <section class="bg-gray-800 p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4">Match Calculator</h2>
+        <div class="space-y-4">
+          <div class="grid md:grid-cols-2 gap-4">
+            <!-- Team 1 -->
+            <div class="space-y-4">
+              <h3 class="font-medium">Team 1</h3>
+              <div class="autocomplete">
+                <input
+                  type="text"
+                  id="team1Player1"
+                  placeholder="Player 1"
+                  class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div
+                  class="suggestions"
+                  id="team1Player1Suggestions"
+                ></div>
+              </div>
+              <div class="autocomplete">
+                <input
+                  type="text"
+                  id="team1Player2"
+                  placeholder="Player 2"
+                  class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div
+                  class="suggestions"
+                  id="team1Player2Suggestions"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="space-y-4">
+              <h3 class="font-medium">Team 2</h3>
+              <div class="autocomplete">
+                <input
+                  type="text"
+                  id="team2Player1"
+                  placeholder="Player 1"
+                  class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div
+                  class="suggestions"
+                  id="team2Player1Suggestions"
+                ></div>
+              </div>
+              <div class="autocomplete">
+                <input
+                  type="text"
+                  id="team2Player2"
+                  placeholder="Player 2"
+                  class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div
+                  class="suggestions"
+                  id="team2Player2Suggestions"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="calculateMatch"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Calculate Match
+          </button>
+
+          <!-- JSON Output -->
+          <pre
+            id="matchResultJson"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></pre>
+          <!-- Human-Readable Output -->
+          <div
+            id="matchResultReadable"
+            class="bg-gray-900 p-4 rounded-lg overflow-x-auto hidden"
+          ></div>
+        </div>
+      </section>
     </div>
+  </div>
 
-    <script>
-        let allPlayers = [];
-        const API_BASE = 'http://localhost:5000'; // Set this to your API base URL if needed
+  <script>
+    let allPlayers = [];
+    // We track the last fetched data so that we can re-render if the user toggles modes
+    let latestEloData = null;
+    let latestHistoryData = null;
+    let latestMatchData = null;
 
-        // Utility function to format JSON responses
-        function formatJSON(obj) {
-            return JSON.stringify(obj, null, 2);
+    // Default mode: JSON
+    let isJsonMode = true;
+
+    const API_BASE = "http://localhost:5000"; // Adjust if needed
+
+    // Utility function to format JSON responses
+    function formatJSON(obj) {
+      return JSON.stringify(obj, null, 2);
+    }
+
+    // Show/hide loading spinner (global spinner on the Load Players button)
+    function setLoading(isLoading) {
+      const spinner = document.querySelector(".loading");
+      if (spinner) {
+        if (isLoading) {
+          spinner.classList.remove("hidden");
+        } else {
+          spinner.classList.add("hidden");
+        }
+      }
+    }
+
+    // Show/hide loading spinner on the Get History button
+    function setHistoryLoading(isLoading) {
+      const spinner = document.getElementById("historyLoadingSpinner");
+      if (!spinner) return;
+      if (isLoading) {
+        spinner.classList.remove("hidden");
+      } else {
+        spinner.classList.add("hidden");
+      }
+    }
+
+    // Show data loading status
+    function updateDataStatus() {
+      const status = document.getElementById("dataStatus");
+      if (allPlayers.length > 0) {
+        status.textContent = `${allPlayers.length} players loaded`;
+        status.className = "text-green-400";
+      } else {
+        status.textContent = "No player data loaded";
+        status.className = "text-gray-400";
+      }
+    }
+
+    // ==============================
+    // Toggle between JSON & readable
+    // ==============================
+    const toggleModeBtn = document.getElementById("toggleMode");
+    toggleModeBtn.addEventListener("click", () => {
+      isJsonMode = !isJsonMode;
+      toggleModeBtn.textContent = isJsonMode
+        ? "Switch to Table View"
+        : "Switch to JSON";
+
+      // Re-render any data we already have
+      renderEloData(latestEloData);
+      renderHistoryData(latestHistoryData);
+      renderMatchData(latestMatchData);
+    });
+
+    // Render ELO data
+    function renderEloData(data) {
+      const jsonEl = document.getElementById("eloResultJson");
+      const readableEl = document.getElementById("eloResultReadable");
+
+      // Hide both initially
+      jsonEl.classList.add("hidden");
+      readableEl.classList.add("hidden");
+
+      if (!data) return; // If there's no data, do nothing
+
+      if (isJsonMode) {
+        // Show JSON
+        jsonEl.textContent = formatJSON(data);
+        jsonEl.classList.remove("hidden");
+      } else {
+        // Show a human-readable table
+        const {
+          name,
+          player_id,
+          rank,
+          club,
+          city,
+          games,
+          elo_rating,
+          division,
+          trend_90_days,
+          pro_status,
+        } = data;
+
+        // Build a simple table
+        readableEl.innerHTML = `
+          <table class="table-auto w-full">
+            <tbody>
+              <tr>
+                <th class="border px-4 py-2 text-left">Name</th>
+                <td class="border px-4 py-2">${name}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Player ID</th>
+                <td class="border px-4 py-2">${player_id}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Rank</th>
+                <td class="border px-4 py-2">${rank}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Club</th>
+                <td class="border px-4 py-2">${club}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">City</th>
+                <td class="border px-4 py-2">${city}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Games</th>
+                <td class="border px-4 py-2">${games}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">ELO Rating</th>
+                <td class="border px-4 py-2">${elo_rating}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Division</th>
+                <td class="border px-4 py-2">${division}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Trend (90 days)</th>
+                <td class="border px-4 py-2">${trend_90_days}</td>
+              </tr>
+              <tr>
+                <th class="border px-4 py-2 text-left">Pro Status</th>
+                <td class="border px-4 py-2">${pro_status}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        readableEl.classList.remove("hidden");
+      }
+    }
+
+    // Render History data
+    function renderHistoryData(data) {
+      const jsonEl = document.getElementById("historyResultJson");
+      const readableEl = document.getElementById("historyResultReadable");
+
+      // Hide both initially
+      jsonEl.classList.add("hidden");
+      readableEl.classList.add("hidden");
+
+      if (!data) return;
+
+      if (isJsonMode) {
+        jsonEl.textContent = formatJSON(data);
+        jsonEl.classList.remove("hidden");
+      } else {
+        // data.history is an array of { date, points }
+        let rows = "";
+        if (data.history) {
+          rows = data.history
+            .map(
+              (h) => `
+            <tr>
+              <td class="border px-4 py-2">${h.date}</td>
+              <td class="border px-4 py-2">${h.points ?? ""}</td>
+            </tr>
+          `
+            )
+            .join("");
         }
 
-        // Show/hide loading spinner
-        function setLoading(isLoading) {
-            const spinner = document.querySelector('.loading');
-            if (isLoading) {
-                spinner.classList.remove('hidden');
-            } else {
-                spinner.classList.add('hidden');
-            }
-        }
+        readableEl.innerHTML = `
+          <h3 class="mb-2 font-semibold">
+            ${data.name} - ${data.division} (ID: ${data.player_id})
+          </h3>
+          <table class="table-auto w-full">
+            <thead>
+              <tr>
+                <th class="border px-4 py-2">Date</th>
+                <th class="border px-4 py-2">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+        readableEl.classList.remove("hidden");
+      }
+    }
 
-        // Show data loading status
-        function updateDataStatus() {
-            const status = document.getElementById('dataStatus');
-            if (allPlayers.length > 0) {
-                status.textContent = `${allPlayers.length} players loaded`;
-                status.className = 'text-green-400';
-            } else {
-                status.textContent = 'No player data loaded';
-                status.className = 'text-gray-400';
-            }
-        }
+    // Render Match data
+    function renderMatchData(data) {
+      const jsonEl = document.getElementById("matchResultJson");
+      const readableEl = document.getElementById("matchResultReadable");
 
-        // Enhanced autocomplete setup
-        function setupAutocomplete(inputId, suggestionsId) {
-            const input = document.getElementById(inputId);
-            const suggestions = document.getElementById(suggestionsId);
-            const apiPreview = input.parentElement.querySelector('.api-preview');
-            let selectedIndex = -1;
-            let visibleSuggestions = [];
+      // Hide both initially
+      jsonEl.classList.add("hidden");
+      readableEl.classList.add("hidden");
 
-            function updateSelection() {
-                const items = suggestions.querySelectorAll('.suggestion-item');
-                items.forEach((item, i) => {
-                    item.classList.toggle('selected', i === selectedIndex);
-                });
-            }
+      if (!data) return;
 
-            input.addEventListener('keydown', (e) => {
-                if (!suggestions.style.display || suggestions.style.display === 'none') return;
+      if (isJsonMode) {
+        jsonEl.textContent = formatJSON(data);
+        jsonEl.classList.remove("hidden");
+      } else {
+        const { team1_players, team2_players, team1_rating, team2_rating, combinations } = data;
 
-                switch(e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        selectedIndex = Math.min(selectedIndex + 1, visibleSuggestions.length - 1);
-                        updateSelection();
-                        break;
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        selectedIndex = Math.max(selectedIndex - 1, 0);
-                        updateSelection();
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        if (selectedIndex >= 0) {
-                            input.value = visibleSuggestions[selectedIndex].name;
-                            suggestions.style.display = 'none';
-                            updateApiPreview();
-                        }
-                        break;
-                    case 'Escape':
-                        suggestions.style.display = 'none';
-                        break;
-                }
-            });
+        // Build a row for each combination
+        const comboRows = (combinations || [])
+          .map(
+            (c) => `
+          <tr>
+            <td class="border px-4 py-2">${c.b}</td>
+            <td class="border px-4 py-2">${c.p}</td>
+            <td class="border px-4 py-2">${c.e1}</td>
+            <td class="border px-4 py-2">${c.x1}</td>
+            <td class="border px-4 py-2">${c.description}</td>
+          </tr>
+        `
+          )
+          .join("");
 
-            function updateApiPreview() {
-                const value = input.value;
-                if (!value) return;
+        readableEl.innerHTML = `
+          <div class="mb-4">
+            <h3 class="font-semibold">Team 1 Players</h3>
+            <ul class="list-disc ml-6">
+              <li>${team1_players[0].resolved_name} 
+                  (entered as: "${team1_players[0].identifier}")</li>
+              <li>${team1_players[1].resolved_name} 
+                  (entered as: "${team1_players[1].identifier}")</li>
+            </ul>
+            <p>Team 1 Rating: ${team1_rating}</p>
+          </div>
+          <div class="mb-4">
+            <h3 class="font-semibold">Team 2 Players</h3>
+            <ul class="list-disc ml-6">
+              <li>${team2_players[0].resolved_name} 
+                  (entered as: "${team2_players[0].identifier}")</li>
+              <li>${team2_players[1].resolved_name} 
+                  (entered as: "${team2_players[1].identifier}")</li>
+            </ul>
+            <p>Team 2 Rating: ${team2_rating}</p>
+          </div>
+          <table class="table-auto w-full">
+            <thead>
+              <tr>
+                <th class="border px-4 py-2">b</th>
+                <th class="border px-4 py-2">p</th>
+                <th class="border px-4 py-2">e1</th>
+                <th class="border px-4 py-2">x1</th>
+                <th class="border px-4 py-2">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${comboRows}
+            </tbody>
+          </table>
+        `;
+        readableEl.classList.remove("hidden");
+      }
+    }
 
-                let previewText = '';
-                if (inputId === 'eloPlayer') {
-                    previewText = `GET /elo/${encodeURIComponent(value)}`;
-                } else if (inputId === 'historyPlayer') {
-                    previewText = `GET /history/${encodeURIComponent(value)}`;
-                } else if (inputId.startsWith('team')) {
-                    const team1 = [
-                        document.getElementById('team1Player1').value,
-                        document.getElementById('team1Player2').value
-                    ];
-                    const team2 = [
-                        document.getElementById('team2Player1').value,
-                        document.getElementById('team2Player2').value
-                    ];
-                    if (team1[0] && team1[1] && team2[0] && team2[1]) {
-                        previewText = `POST /match\nBody: ${JSON.stringify({team1, team2}, null, 2)}`;
-                    }
-                }
-                if (previewText) {
-                    apiPreview.textContent = previewText;
-                    apiPreview.classList.remove('hidden');
-                }
-            }
-
-            input.addEventListener('input', () => {
-                const value = input.value.toLowerCase();
-                selectedIndex = -1;
-                
-                if (value.length < 2) {
-                    suggestions.style.display = 'none';
-                    return;
-                }
-
-                visibleSuggestions = allPlayers
-                    .filter(player => 
-                        player.name.toLowerCase().includes(value) ||
-                        player.player_id.toString().includes(value)
-                    )
-                    .slice(0, 10);
-
-                if (visibleSuggestions.length > 0) {
-                    suggestions.innerHTML = visibleSuggestions
-                        .map(player => `
-                            <div class="suggestion-item" data-value="${player.name}">
-                                ${player.name} (${player.division}) - ID: ${player.player_id}
-                            </div>
-                        `)
-                        .join('');
-                    suggestions.style.display = 'block';
-                } else {
-                    suggestions.style.display = 'none';
-                }
-
-                updateApiPreview();
-            });
-
-            suggestions.addEventListener('click', (e) => {
-                if (e.target.classList.contains('suggestion-item')) {
-                    input.value = e.target.dataset.value;
-                    suggestions.style.display = 'none';
-                }
-            });
-
-            // Hide suggestions when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!input.contains(e.target) && !suggestions.contains(e.target)) {
-                    suggestions.style.display = 'none';
-                }
-            });
-
-            input.addEventListener('change', updateApiPreview);
-        }
-
-        // Load players data
-        document.getElementById('loadPlayers').addEventListener('click', async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(`${API_BASE}/players`);
-                if (!response.ok) throw new Error('Failed to load players');
-                allPlayers = await response.json();
-                updateDataStatus();
-            } catch (error) {
-                console.error('Error loading players:', error);
-                updateDataStatus();
-            } finally {
-                setLoading(false);
-            }
-        });
-
-        // Setup ELO endpoint
-        document.getElementById('getElo').addEventListener('click', async () => {
-            const player = document.getElementById('eloPlayer').value;
-            const resultElement = document.getElementById('eloResult');
-            
-            try {
-                const response = await fetch(`${API_BASE}/elo/${encodeURIComponent(player)}`);
-                const data = await response.json();
-                resultElement.textContent = formatJSON(data);
-                resultElement.classList.remove('hidden');
-            } catch (error) {
-                resultElement.textContent = 'Error fetching ELO data';
-                resultElement.classList.remove('hidden');
-            }
-        });
-
-        // Setup History endpoint
-        document.getElementById('getHistory').addEventListener('click', async () => {
-            const player = document.getElementById('historyPlayer').value;
-            const resultElement = document.getElementById('historyResult');
-            
-            try {
-                const response = await fetch(`${API_BASE}/history/${encodeURIComponent(player)}`);
-                const data = await response.json();
-                resultElement.textContent = formatJSON(data);
-                resultElement.classList.remove('hidden');
-            } catch (error) {
-                resultElement.textContent = 'Error fetching history data';
-                resultElement.classList.remove('hidden');
-            }
-        });
-
-        // Setup Match endpoint
-        document.getElementById('calculateMatch').addEventListener('click', async () => {
-            const team1 = [
-                document.getElementById('team1Player1').value,
-                document.getElementById('team1Player2').value
-            ];
-            const team2 = [
-                document.getElementById('team2Player1').value,
-                document.getElementById('team2Player2').value
-            ];
-            const resultElement = document.getElementById('matchResult');
-
-            try {
-                const response = await fetch(`${API_BASE}/match`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        team1,
-                        team2
-                    })
-                });
-                const data = await response.json();
-                resultElement.textContent = formatJSON(data);
-                resultElement.classList.remove('hidden');
-            } catch (error) {
-                resultElement.textContent = 'Error calculating match';
-                resultElement.classList.remove('hidden');
-            }
-        });
-
+    // ===================
+    // Event Handlers
+    // ===================
+    // Load players data
+    document.getElementById("loadPlayers").addEventListener("click", async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE}/players`);
+        if (!response.ok) throw new Error("Failed to load players");
+        allPlayers = await response.json();
         updateDataStatus();
+      } catch (error) {
+        console.error("Error loading players:", error);
+        updateDataStatus();
+      } finally {
+        setLoading(false);
+      }
+    });
 
-        // Setup autocomplete for all inputs
-        setupAutocomplete('eloPlayer', 'eloSuggestions');
-        setupAutocomplete('historyPlayer', 'historySuggestions');
-        setupAutocomplete('team1Player1', 'team1Player1Suggestions');
-        setupAutocomplete('team1Player2', 'team1Player2Suggestions');
-        setupAutocomplete('team2Player1', 'team2Player1Suggestions');
-        setupAutocomplete('team2Player2', 'team2Player2Suggestions');
-    </script>
+    // ELO fetch
+    document.getElementById("getElo").addEventListener("click", async () => {
+      const player = document.getElementById("eloPlayer").value;
+      try {
+        const response = await fetch(`${API_BASE}/elo/${encodeURIComponent(player)}`);
+        const data = await response.json();
+        latestEloData = data; // store globally
+        renderEloData(data);
+      } catch (error) {
+        latestEloData = { error: "Error fetching ELO data" };
+        renderEloData(latestEloData);
+      }
+    });
+
+    // History fetch
+    document.getElementById("getHistory").addEventListener("click", async () => {
+      const player = document.getElementById("historyPlayer").value;
+
+      // Start spinner
+      setHistoryLoading(true);
+      try {
+        const response = await fetch(
+          `${API_BASE}/history/${encodeURIComponent(player)}`
+        );
+        const data = await response.json();
+        latestHistoryData = data; // store globally
+        renderHistoryData(data);
+      } catch (error) {
+        latestHistoryData = { error: "Error fetching history data" };
+        renderHistoryData(latestHistoryData);
+      } finally {
+        // Stop spinner
+        setHistoryLoading(false);
+      }
+    });
+
+    // Match fetch
+    document.getElementById("calculateMatch").addEventListener("click", async () => {
+      const team1 = [
+        document.getElementById("team1Player1").value,
+        document.getElementById("team1Player2").value,
+      ];
+      const team2 = [
+        document.getElementById("team2Player1").value,
+        document.getElementById("team2Player2").value,
+      ];
+      try {
+        const response = await fetch(`${API_BASE}/match`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            team1,
+            team2,
+          }),
+        });
+        const data = await response.json();
+        latestMatchData = data; // store globally
+        renderMatchData(data);
+      } catch (error) {
+        latestMatchData = { error: "Error calculating match" };
+        renderMatchData(latestMatchData);
+      }
+    });
+
+    // ==================
+    // Autocomplete setup
+    // ==================
+    function setupAutocomplete(inputId, suggestionsId) {
+      const input = document.getElementById(inputId);
+      const suggestions = document.getElementById(suggestionsId);
+      const apiPreview = input.parentElement.querySelector(".api-preview");
+      let selectedIndex = -1;
+      let visibleSuggestions = [];
+
+      function updateSelection() {
+        const items = suggestions.querySelectorAll(".suggestion-item");
+        items.forEach((item, i) => {
+          item.classList.toggle("selected", i === selectedIndex);
+        });
+      }
+
+      input.addEventListener("keydown", (e) => {
+        if (!suggestions.style.display || suggestions.style.display === "none")
+          return;
+
+        switch (e.key) {
+          case "ArrowDown":
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, visibleSuggestions.length - 1);
+            updateSelection();
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelection();
+            break;
+          case "Enter":
+            e.preventDefault();
+            if (selectedIndex >= 0) {
+              input.value = visibleSuggestions[selectedIndex].name;
+              suggestions.style.display = "none";
+              updateApiPreview();
+            }
+            break;
+          case "Escape":
+            suggestions.style.display = "none";
+            break;
+        }
+      });
+
+      function updateApiPreview() {
+        const value = input.value;
+        if (!value) return;
+
+        let previewText = "";
+        if (inputId === "eloPlayer") {
+          // ELO route
+          previewText = `GET /elo/${encodeURIComponent(value)}`;
+        } else if (inputId === "historyPlayer") {
+          // History route
+          previewText = `GET /history/${encodeURIComponent(value)}`;
+        } else if (inputId.startsWith("team")) {
+          // Match route
+          const team1 = [
+            document.getElementById("team1Player1").value,
+            document.getElementById("team1Player2").value,
+          ];
+          const team2 = [
+            document.getElementById("team2Player1").value,
+            document.getElementById("team2Player2").value,
+          ];
+          if (team1[0] && team1[1] && team2[0] && team2[1]) {
+            previewText = `POST /match\nBody: ${JSON.stringify(
+              { team1, team2 },
+              null,
+              2
+            )}`;
+          }
+        }
+        if (previewText) {
+          apiPreview.textContent = previewText;
+          apiPreview.classList.remove("hidden");
+        }
+      }
+
+      input.addEventListener("input", () => {
+        const value = input.value.toLowerCase();
+        selectedIndex = -1;
+        if (value.length < 2) {
+          suggestions.style.display = "none";
+          return;
+        }
+        visibleSuggestions = allPlayers
+          .filter(
+            (player) =>
+              player.name.toLowerCase().includes(value) ||
+              player.player_id.toString().includes(value)
+          )
+          .slice(0, 10);
+
+        if (visibleSuggestions.length > 0) {
+          suggestions.innerHTML = visibleSuggestions
+            .map(
+              (player) => `
+              <div class="suggestion-item" data-value="${player.name}">
+                ${player.name} (${player.division}) - ID: ${player.player_id}
+              </div>
+            `
+            )
+            .join("");
+          suggestions.style.display = "block";
+        } else {
+          suggestions.style.display = "none";
+        }
+        updateApiPreview();
+      });
+
+      suggestions.addEventListener("click", (e) => {
+        if (e.target.classList.contains("suggestion-item")) {
+          input.value = e.target.dataset.value;
+          suggestions.style.display = "none";
+          updateApiPreview();
+        }
+      });
+
+      // Hide suggestions when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+          suggestions.style.display = "none";
+        }
+      });
+
+      // Update preview if user just leaves input field
+      input.addEventListener("change", updateApiPreview);
+    }
+
+    // Initialize
+    updateDataStatus();
+    setupAutocomplete("eloPlayer", "eloSuggestions");
+    setupAutocomplete("historyPlayer", "historySuggestions");
+    setupAutocomplete("team1Player1", "team1Player1Suggestions");
+    setupAutocomplete("team1Player2", "team1Player2Suggestions");
+    setupAutocomplete("team2Player1", "team2Player1Suggestions");
+    setupAutocomplete("team2Player2", "team2Player2Suggestions");
+  </script>
 </body>
 </html>

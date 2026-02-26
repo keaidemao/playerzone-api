@@ -34,8 +34,8 @@ python flask_app.py
 - Special handling for players in both Open/Women divisions
 - Match calculations use the RGX rating system
 
-The API is reachable at: johanneskdl.pythonanywhere.com
-<br>sample request: johanneskdl.pythonanywhere.com/elo/paul_siemer
+The API is reachable at: roundnet.kadelfilm.de/rgx-api
+<br>sample request: roundnet.kadelfilm.de/rgx-api/elo/paul_siemer
 
 more soon
 
